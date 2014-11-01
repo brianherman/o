@@ -1,11 +1,15 @@
-package edu.cs.uic.Document;
+package test2;
 
 
+
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.awt.event.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -20,16 +24,14 @@ public class DocumentFrame extends JFrame{
 	private JMenu file;
 	private JMenuItem connect;
 	private JMenuItem quit;
-	private ObjectOutputStream out = null;
-	private ObjectInputStream in = null;
 	private Socket socket = null;
-	private String name = "beast";
+	private String Author = "beast";
 
 	private JMenuItem newDocument;
 	private ActionListener MenuListener;
 	private JPanel statusBar;
 	private JLabel statusText;
-	
+	private String id;
 	public DocumentFrame(){
 		listModel = new DefaultListModel();
 		
@@ -94,7 +96,7 @@ public class DocumentFrame extends JFrame{
 						null,
 						"127.0.0.1");
 		//Get the name of the user.
-		name = (String)JOptionPane.showInputDialog(
+		Author = (String)JOptionPane.showInputDialog(
 				null,
 				"Enter the username you wish to use:\n",
 						"Customized Dialog",
@@ -102,22 +104,6 @@ public class DocumentFrame extends JFrame{
 						null,
 						null,
 						"brian");
-		try{
-			//Open the socket and get the input/output streams.
-			socket = new Socket(ipAddress,25565);
-			out = new ObjectOutputStream(socket.getOutputStream());
-			in  = new ObjectInputStream(socket.getInputStream());
-			//Send inital connection envelope.
-			ArrayList<String> recipiants = new ArrayList<String>();
-			recipiants.add("Server");
-			Envelope e = new Envelope(name, "Initial Connection.", recipiants);
-			out.writeObject(e);
-			out.flush();
-			//Retrieve the people connected.
-
-		}catch(IOException e){
-			e.printStackTrace();
-		}
 	}
  public class MenuListener implements ActionListener {
 
@@ -130,18 +116,19 @@ public class DocumentFrame extends JFrame{
 			//client.disconnect();
 			String url = (String)JOptionPane.showInputDialog(
 	                null,
-	                "Document by URL",
+	                "New Document",
 	                "Open",
 	                JOptionPane.PLAIN_MESSAGE,
 	                null,
 	                null,
 	                "");
 			if ((url != null) && (url.length() > 0)) {
-			//	client.connect(url);
-			//	client.sync();
+	            UUID id = null;
+	            id = UUID.randomUUID();
 			}
 		 
 		}	
+		
 	}
 	 
  }
@@ -150,29 +137,12 @@ public class DocumentFrame extends JFrame{
 	 	boolean editable = false;
 	 	boolean commandMode = false;
 		private int position;
+		private String host;
 
 		public void keyHandler(KeyEvent ev){
 			int ID = ev.getID();
 			if(ID == KeyEvent.KEY_TYPED){
-				try{
-					//Open the socket and get the input/output streams.
-					socket = new Socket("127.0.0.1",25566);
-					out = new ObjectOutputStream(socket.getOutputStream());
-					in  = new ObjectInputStream(socket.getInputStream());
-					//Send inital connection envelope.
-					ArrayList<String> recipiants = new ArrayList<String>();
-					recipiants.add("Server");
-					Envelope e = new Envelope(name, "Initial Connection.", recipiants);
-					out.writeObject(e);
-					out.flush();
-					//Retrieve the people connected.
-					e = (Envelope)in.readObject();
-					
-				}catch(IOException ex){
-					ex.printStackTrace();
-				} catch (ClassNotFoundException ex) {
-					ex.printStackTrace();
-				}
+				update(document.getText());
 			}else if(ev.getKeyCode()==KeyEvent.VK_ESCAPE){
 				editable = !editable;
 			}else if(ev.getKeyCode() == KeyEvent.VK_COLON){
@@ -182,25 +152,32 @@ public class DocumentFrame extends JFrame{
 			if(commandMode)
 			{
 				char c = ev.getKeyChar();
+				switch(c){
+				case 'W':
+					break;
+				case 'U':
+					break;
+				case 'Q':
+					System.exit(0);
+					break;
+				case 'E':
+					break;
+				case 'O':
+					break;
+				}
 				
-			}else{
-				ArrayList<String> recipiants = new ArrayList<String>();
-				recipiants.add("TOALL");
-				update(new Envelope(name, document.getText(), recipiants));
 			}
-			
-				
-			}
-		
-		public void update(Envelope m) 
+		}
+		public void update(String m) 
 		{
-			try {
-				//callback.log(m.sender() +" : " + m.message());
-				out.writeObject(m);
-				out.flush();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+	        try {
+	            Registry registry = LocateRegistry.getRegistry(host);
+	            DocumentStub stub = (DocumentStub) registry.lookup("DocumentStub");
+	            String response = stub.sync(new Document(id.toString()+"$"+Author,document.getText()));	            System.out.println("response: " + response);
+	        } catch (Exception e) {
+	            System.err.println("Client exception: " + e.toString());
+	            e.printStackTrace();
+	        }
 		}
 		
 		//Send all keyboard events to the same place!
@@ -208,38 +185,13 @@ public class DocumentFrame extends JFrame{
 			keyHandler(e);			
 		}
 		public void keyReleased(KeyEvent e) {
-			//keyHandler(e);
+			keyHandler(e);
 		}
 		public void keyTyped(KeyEvent e) {
-			//keyHandler(e);
+			keyHandler(e);
 		}
+		
+	
 	}
- /**
-	 * This thread listens for incoming messages.
-	 * @author brianherman
-	 *
-	 */
-	private class ClientThread implements Runnable {
-		public void run() {
-			Envelope e = null;
-			try {
-				/*
-				 * Loop to check for incoming messages.
-				 */
-				while((e=(Envelope)in.readObject()) != null)
-				{
-					String temp = e.getDocument();
-					document.setText(temp);
-					temp=null;
-				}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			} catch (ClassNotFoundException ex) {
-				ex.printStackTrace();
-			}
-		}
-
-	} 
 }
-
 	
