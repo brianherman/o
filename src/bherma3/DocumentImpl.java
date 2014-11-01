@@ -9,7 +9,7 @@ import java.rmi.registry.Registry;
 public class DocumentImpl implements DocumentRemote{
 
 	@Override
-	public String sync(DocumentDistributedObject arg) throws RemoteException {
+	public String sync(Document arg) throws RemoteException {
         String name = "Document";
 //        Registry registry = LocateRegistry.getRegistry("Document");
         Registry registry = LocateRegistry.getRegistry(1099);

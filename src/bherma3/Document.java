@@ -2,10 +2,12 @@ package bherma3;
 
 import java.io.Serializable;
 
-public final class DocumentDistributedObject implements Serializable {
-	private	 String ID;
-	private String Text;
+public final class Document implements Serializable {
+	
+	private	 String UUID;
 	private String Author;
+	private String DocumentUUID;
+	private String password;
 	public String getID() {
 		return ID;
 	}
@@ -15,7 +17,7 @@ public final class DocumentDistributedObject implements Serializable {
 	public String getAuthor() {
 		return Author;
 	}
-	public DocumentDistributedObject(String i, String t, String a){
+	public Document(String i, String t, String a){
 		ID=i;
 		Text = t;
 		Author = a;

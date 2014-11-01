@@ -31,7 +31,7 @@ public class Client implements Runnable{
 			String update = MainDocumentFrame.getText();
 			String Author = MainDocumentFrame.getName();
 			try {
-				MainDocumentFrame.setText(docImp.sync(new DocumentDistributedObject(uu.toString(), update,Author)));
+				MainDocumentFrame.setText(docImp.sync(new Document(uu.toString(), update,Author)));
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
