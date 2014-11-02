@@ -6,40 +6,19 @@ import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.UUID;
 
 
 
 
-public class Client implements Runnable{
+public class Client{
 	static	DocumentFrame MainDocumentFrame = new DocumentFrame();
 	static   SecurityManager security = System.getSecurityManager();
-	static	DocumentImpl docImp = new DocumentImpl();
-	UUID uu = UUID.randomUUID();
-
+	static ArrayList<String> text = new ArrayList<String>();
 	public static void main(String args[]) throws RemoteException{
-		MainDocumentFrame.setDefaultCloseOperation(0);
-		while (MainDocumentFrame.finishedLoading == false){
+	     MainDocumentFrame.setDefaultCloseOperation(0);
 
-		}
-		new Thread(new Client()).start();
-	}
-
-	@Override
-	public void run() {
-		while(true){
-			String update = MainDocumentFrame.getText();
-			String Author = MainDocumentFrame.getName();
-			try {
-				MainDocumentFrame.setText(docImp.sync(new Document(uu.toString(), update,Author)));
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 }

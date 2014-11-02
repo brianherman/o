@@ -1,10 +1,10 @@
 package bherma3;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 
 public interface DocumentRemote extends Remote {
-
-	/** This is a sample method. Delete it and add one of your own. */
-	String sync(Document arg) throws RemoteException;
+	void sync(Document arrayList) throws RemoteException;
+	Document getText() throws RemoteException;
 }

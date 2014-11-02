@@ -3,6 +3,7 @@ package bherma3;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.awt.event.*;
 import java.awt.*;
 import java.io.*;
@@ -20,7 +21,7 @@ public class DocumentFrame extends JFrame{
 
 	private JMenuBar menuBar;
 	private JMenu file;
-	private JMenuItem connect;
+	private JMenuItem update;
 	private JMenuItem quit;
 	private Socket socket = null;
 	private String Author = "beast";
@@ -28,9 +29,14 @@ public class DocumentFrame extends JFrame{
 	private JMenuItem newDocument;
 	private ActionListener MenuListener;
 	private JPanel statusBar;
-	private JLabel statusText;
+	private JButton statusText;
 	private String id;
 	public boolean finishedLoading = false;
+	private JButton push;
+	private JButton pull;
+
+	private JMenuItem open;
+	private JButton send;
 	public DocumentFrame(){
 		listModel = new DefaultListModel();
 
@@ -40,22 +46,30 @@ public class DocumentFrame extends JFrame{
 		MenuListener = new MenuListener();
 		menuBar = new JMenuBar();
 		file = new JMenu("File");
-		connect = new JMenuItem("Connect");
+		open = new JMenuItem("Open");
 
 		quit = new JMenuItem("Quit");
 
-		connect.addActionListener(MenuListener);
+		open.addActionListener(MenuListener);
 		quit.addActionListener(MenuListener);
-		file.add(connect);
 
 		file.add(quit);
 		menuBar.add(file);
 		setJMenuBar(menuBar);
 		////////////////////////Status Bar Setup////////////////////////
 		statusBar = new JPanel();
-		statusText = new JLabel("Ready!");
-		statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
-		statusBar.add(statusText);
+		statusText = new JButton("Update");
+		send = new JButton("Send");
+		
+//		statusBar.setBorder(new BevelBorder(BevelBorder.LOWERED));
+		pull = new JButton("Pull");
+		push = new JButton("Push");
+		
+		statusBar.add(pull);
+		statusBar.add(push);
+
+		pull.addActionListener(MenuListener);
+		push.addActionListener(MenuListener);
 		statusText.setMinimumSize(new Dimension(24,24));
 		add(statusBar, BorderLayout.SOUTH);
 		////////////////////TEXTAREA SETUP//////////////////////////////
@@ -85,35 +99,81 @@ public class DocumentFrame extends JFrame{
 		setVisible(true);
 	}
 	public void connect(){
-		//Get the server's ip address.
-		String ipAddress = (String)JOptionPane.showInputDialog(
-				null,
-				"Enter the server's ip address:\n",
-				"Customized Dialog",
-				JOptionPane.PLAIN_MESSAGE,
-				null,
-				null,
-				"127.0.0.1");
-		//Get the name of the user.
-		Author = (String)JOptionPane.showInputDialog(
-				null,
-				"Enter the username you wish to use:\n",
-				"Customized Dialog",
-				JOptionPane.PLAIN_MESSAGE,
-				null,
-				null,
-				"brian");
-		finishedLoading=true;
+//		//Get the server's ip address.
+//		String ipAddress = (String)JOptionPane.showInputDialog(
+//				null,
+//				"Enter the server's ip address:\n",
+//				"Customized Dialog",
+//				JOptionPane.PLAIN_MESSAGE,
+//				null,
+//				null,
+//				"127.0.0.1");
+//		//Get the name of the user.
+//		Author = (String)JOptionPane.showInputDialog(
+//				null,
+//				"Enter the username you wish to use:\n",
+//				"Customized Dialog",
+//				JOptionPane.PLAIN_MESSAGE,
+//				null,
+//				null,
+//				"brian");
+//		finishedLoading=true;
 	}
-
 	public class MenuListener implements ActionListener {
+		private Document docu = new Document("","");
 
+		public void pull(){
+			if (System.getSecurityManager() == null) {
+				System.setSecurityManager(new SecurityManager());
+			}
+			try {
+				String name = "Document";
+				DocumentRemote engine = new DocumentImplementation();
+				DocumentRemote stub =
+						(DocumentRemote) UnicastRemoteObject.exportObject(engine, 0);
+				System.out.println(stub.getText());
+				document.setText(stub.getText().toString());
+				Registry registry = LocateRegistry.getRegistry();
+				registry.rebind(name, stub);
+				System.out.println("ComputeEngine bound");
+			} catch (Exception e) {
+				System.err.println("ComputeEngine exception:");
+				e.printStackTrace();
+			}
+
+		}
+		public void push(){
+			if (System.getSecurityManager() == null) {
+				System.setSecurityManager(new SecurityManager());
+			}
+			try {
+				String name = "Document";
+				DocumentRemote engine = new DocumentImplementation();
+				DocumentRemote stub =
+						(DocumentRemote) UnicastRemoteObject.exportObject(engine, 0);
+				System.out.println(stub.getText());
+				stub.sync(docu);
+				Registry registry = LocateRegistry.getRegistry();
+				registry.rebind(name, stub);
+				System.out.println("ComputeEngine bound");
+			} catch (Exception e) {
+				System.err.println("ComputeEngine exception:");
+				e.printStackTrace();
+			}
+
+		}
 		public void actionPerformed(ActionEvent e) {
+			if(e.getSource()==pull){
+				System.out.println("Updating...");
+			}
+			if(e.getSource()==push){
+				System.out.println("Updating...");
+			}
 			if(e.getSource()==quit){
 				//client.disconnect();
 				System.exit(0);
 			}
-			if(e.getSource()==connect){
+			if(e.getSource()==update){
 				//client.disconnect();
 				String url = (String)JOptionPane.showInputDialog(
 						null,
@@ -191,11 +251,24 @@ public class DocumentFrame extends JFrame{
 		}
 	}
 
-	public String getText() {
-		return document.getText();
+	public ArrayList<String> getText() {
+		String unformatted = document.getText();
+		ArrayList<String> result = new ArrayList<String>();
+		String[] splitted = unformatted.split("\n");
+		for(int i=0; i<splitted.length; i++){
+			result.add(splitted[i]);
+		}
+		return result;
 	}
-	public void setText(String s) {
-		document.setText(s);
+	public void setText(ArrayList<String> array) {
+		String text=array.toString();
+		if (array.size()==0){
+			return;
+		}
+		for(int i=0; i<array.size(); i++){
+			text = array.get(i) + "\n";
+		}
+		document.setText(text);
 	}			
 }
 
